@@ -260,9 +260,16 @@ function deepLTranslate(sourceText, sourceLocale, targetLocale) {
       `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
     );
   }
+  let baseUrl = DEEPL_API_BASE_URL;
+  if (!apiKey.endsWith(':fx')) {
+    // Auth keys of DeepL API Free end with ':fx'
+    // API domain differs for DeepL Free API and DeepL Pro API
+    // See https://support.deepl.com/hc/en-us/articles/360021183620-DeepL-API-Free-vs-DeepL-API-Pro
+    baseUrl = baseUrl.replace('api-free.deepl.com', 'api.deepl.com ');
+  }
   // Call the DeepL API
   let url =
-    DEEPL_API_BASE_URL +
+    baseUrl +
     endpoint +
     `?auth_key=${apiKey}&target_lang=${targetLocale}&${sourceTextCasted}`;
   if (sourceLocale) {
@@ -308,8 +315,15 @@ function deepLGetLanguages(type = 'source') {
       `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
     );
   }
+  let baseUrl = DEEPL_API_BASE_URL;
+  if (!apiKey.endsWith(':fx')) {
+    // Auth keys of DeepL API Free end with ':fx'
+    // API domain differs for DeepL Free API and DeepL Pro API
+    // See https://support.deepl.com/hc/en-us/articles/360021183620-DeepL-API-Free-vs-DeepL-API-Pro
+    baseUrl = baseUrl.replace('api-free.deepl.com', 'api.deepl.com ');
+  }
   // Call the DeepL API
-  let url = DEEPL_API_BASE_URL + endpoint + `?auth_key=${apiKey}&type=${type}`;
+  let url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
   const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   if (response.getResponseCode() === 200) {
     return JSON.parse(response.getContentText());
