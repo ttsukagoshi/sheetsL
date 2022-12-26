@@ -4,3 +4,7 @@
 [![Lint Code Base](https://github.com/ttsukagoshi/sheetsL/actions/workflows/linter.yml/badge.svg)](https://github.com/ttsukagoshi/sheetsL/actions/workflows/linter.yml) [![Publish Release](https://github.com/ttsukagoshi/sheetsL/actions/workflows/deploy.yml/badge.svg)](https://github.com/ttsukagoshi/sheetsL/actions/workflows/deploy.yml)
 
 Open-sourced Google Sheets add-on to use DeepL translation. Translate the contents of selected cells using the DeepL API.
+
+## Attributes
+
+The original icon of this add-on is the [Document icons created by Freepik - Flaticon](https://www.flaticon.com/free-icons/document), modified by [ttsukagoshi](https://github.com/ttsukagoshi).
