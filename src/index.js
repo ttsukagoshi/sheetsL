@@ -138,8 +138,8 @@ function setLanguage() {
     if (
       !availableLocaleSource
         .map((langObj) => langObj.language)
-        .includes(responseSourceLocale) ||
-      responseSourceLocale === ''
+        .includes(responseSourceLocale) &&
+      responseSourceLocale != ''
     ) {
       throw new Error(
         `[${ADDON_NAME}] Invalid Value (${responseSourceLocale}): Enter a valid value.`
