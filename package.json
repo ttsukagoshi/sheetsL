@@ -2,7 +2,7 @@
   "name": "sheetsl",
   "version": "0.2.2",
   "description": "Google Sheets addon to use DeepL translation. Translate the contents of the selected cells.",
-  "main": "index.js",
+  "main": "sheetsl.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
