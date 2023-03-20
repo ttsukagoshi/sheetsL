@@ -20,7 +20,7 @@ const UP_KEY_TARGET_LOCALE = 'targetLocale'; // User property key for saving the
 const DEEPL_API_VERSION = 'v2'; // DeepL API version
 const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
 const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
-const ROW_SEPARATOR = ',,,';
+const ROW_SEPARATOR = '|||';
 
 // Threshold value of the length of the text to translate, in bytes. See https://developers.google.com/apps-script/guides/services/quotas#current_limitations
 const THRESHOLD_BYTES = 1900;
@@ -261,9 +261,14 @@ function translateRange(): void {
 
     // Get the source text
     const sourceTextArr = selectedRange.getValues();
+    // console.log(`sourceTextArr: ${JSON.stringify(sourceTextArr)}`);
+
     const translatedText = sourceTextArr.map((row) => {
       const joinedRowText = row.join(ROW_SEPARATOR);
       if (getBytes(encodeURIComponent(joinedRowText)) > THRESHOLD_BYTES) {
+        console.info(
+          `[${ADDON_NAME}] ${joinedRowText} is longer than ${THRESHOLD_BYTES} bytes. Switching to per cell translation.`
+        );
         return row.map((cellValue: string | number | boolean) => {
           if (getBytes(encodeURIComponent(cellValue)) > THRESHOLD_BYTES) {
             throw new Error(
@@ -276,7 +281,7 @@ function translateRange(): void {
               cellValue.toString(),
               userProperties[UP_KEY_SOURCE_LOCALE],
               userProperties[UP_KEY_TARGET_LOCALE]
-            );
+            )[0];
           }
         });
       } else {
@@ -289,6 +294,7 @@ function translateRange(): void {
         )[0].split(ROW_SEPARATOR);
       }
     });
+    // console.log(`translatedText: ${JSON.stringify(translatedText)}`);
 
     // Set translated text in target range
     targetRange.setValues(translatedText);
@@ -325,6 +331,8 @@ function deepLTranslate(
   } else {
     sourceTextCasted = `text=${encodeURIComponent(sourceText)}`;
   }
+  // console.log(`sourceTextCasted: ${sourceTextCasted}`);
+
   // API key
   const apiKey =
     PropertiesService.getUserProperties().getProperty(UP_KEY_DEEPL_API_KEY);
@@ -333,7 +341,7 @@ function deepLTranslate(
       `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
     );
   }
-  let baseUrl = getDeepLApiBaseUrl(apiKey);
+  const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
   let url =
     baseUrl +
@@ -342,10 +350,14 @@ function deepLTranslate(
   if (sourceLocale) {
     url += `&source_lang=${sourceLocale}`;
   }
+  // console.log(`url: ${url}`);
+
   const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
   // Handle error codes
   // See https://www.deepl.com/docs-api/api-access/error-handling/
   const responseCode = response.getResponseCode();
+  // console.log(`responseCode: ${responseCode}`);
+
   if (responseCode === 429) {
     throw new Error(
       `[${ADDON_NAME}] Too Many Requests: Try again after some time.`
@@ -363,8 +375,11 @@ function deepLTranslate(
     response.getContentText()
   );
   const translatedText: string[] = translatedTextObj.translations.map(
-    (translationsResponse: DeepLTranslationObj) => translationsResponse.text
+    (translationsResponse: DeepLTranslationObj): string =>
+      translationsResponse.text
   );
+  // console.log(`translatedText: ${JSON.stringify(translatedText)}`);
+
   return translatedText;
 }
 
@@ -385,7 +400,7 @@ function deepLGetLanguages(type = 'source'): DeepLSupportedLanguages[] {
       `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
     );
   }
-  let baseUrl = getDeepLApiBaseUrl(apiKey);
+  const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
   let url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
   const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
