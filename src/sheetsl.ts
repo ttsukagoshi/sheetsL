@@ -20,6 +20,10 @@ const UP_KEY_TARGET_LOCALE = 'targetLocale'; // User property key for saving the
 const DEEPL_API_VERSION = 'v2'; // DeepL API version
 const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
 const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
+const ROW_SEPARATOR = ',,,';
+
+// Threshold value of the length of the text to translate, in bytes. See https://developers.google.com/apps-script/guides/services/quotas#current_limitations
+const THRESHOLD_BYTES = 1900;
 
 /**
  * The JavaScript object of a DeepL-supported language.
@@ -219,6 +223,10 @@ function setLanguage(): void {
   }
 }
 
+/**
+ * Translate the selected cell range using DeepL API
+ * and paste the result in the adjacent range.
+ */
 function translateRange(): void {
   const ui = SpreadsheetApp.getUi();
   const activeSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
@@ -250,16 +258,38 @@ function translateRange(): void {
         throw new Error(`[${ADDON_NAME}] Translation canceled.`);
       }
     }
+
     // Get the source text
-    const sourceText = selectedRange
-      .getValues()
-      .map((row) => row.join(',,,,,,,,,,'));
-    // Translate
-    const translatedText = deepLTranslate(
-      sourceText,
-      userProperties[UP_KEY_SOURCE_LOCALE],
-      userProperties[UP_KEY_TARGET_LOCALE]
-    ).map((row) => row.split(',,,,,,,,,,'));
+    const sourceTextArr = selectedRange.getValues();
+    const translatedText = sourceTextArr.map((row) => {
+      const joinedRowText = row.join(ROW_SEPARATOR);
+      if (getBytes(encodeURIComponent(joinedRowText)) > THRESHOLD_BYTES) {
+        return row.map((cellValue: string | number | boolean) => {
+          if (getBytes(encodeURIComponent(cellValue)) > THRESHOLD_BYTES) {
+            throw new Error(
+              `[${ADDON_NAME}] Cell content is too long. Please consider splitting the content into multiple cells:\n${cellValue}`
+            );
+          } else {
+            Utilities.sleep(1000); // Interval to avoid concentrated access to API
+            // Cell-based translation
+            return deepLTranslate(
+              cellValue.toString(),
+              userProperties[UP_KEY_SOURCE_LOCALE],
+              userProperties[UP_KEY_TARGET_LOCALE]
+            );
+          }
+        });
+      } else {
+        Utilities.sleep(1000); // Interval to avoid concentrated access to API
+        // Row-based translation
+        return deepLTranslate(
+          joinedRowText,
+          userProperties[UP_KEY_SOURCE_LOCALE],
+          userProperties[UP_KEY_TARGET_LOCALE]
+        )[0].split(ROW_SEPARATOR);
+      }
+    });
+
     // Set translated text in target range
     targetRange.setValues(translatedText);
     // Complete
@@ -377,6 +407,15 @@ function getDeepLApiBaseUrl(apiKey: string): string {
   return apiKey.endsWith(':fx')
     ? DEEPL_API_BASE_URL_FREE
     : DEEPL_API_BASE_URL_PRO;
+}
+
+/**
+ * Get the length of a given string in bytes.
+ * @param text The string of which to get the bytes.
+ * @returns The length of the given text in bytes.
+ */
+function getBytes(text: string): number {
+  return Utilities.newBlob(text).getBytes().length;
 }
 
 if (typeof module === 'object') {
