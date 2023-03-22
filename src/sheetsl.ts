@@ -13,13 +13,13 @@
    limitations under the License.
  */
 
-const ADDON_NAME = 'SheetsL';
+export const ADDON_NAME = 'SheetsL';
 const UP_KEY_DEEPL_API_KEY = 'deeplApiKey'; // User property key for saving the DeepL API key
 const UP_KEY_SOURCE_LOCALE = 'sourceLocale'; // User property key for saving the source language for DeepL
 const UP_KEY_TARGET_LOCALE = 'targetLocale'; // User property key for saving the target language for DeepL
 const DEEPL_API_VERSION = 'v2'; // DeepL API version
-const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
-const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
+export const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
+export const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
 const ROW_SEPARATOR = '|||';
 
 // Threshold value of the length of the text to translate, in bytes. See https://developers.google.com/apps-script/guides/services/quotas#current_limitations
@@ -30,29 +30,29 @@ const THRESHOLD_BYTES = 1900;
  * GET request on /v2/languages returns an array of this object.
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
-interface DeepLSupportedLanguages {
+type DeepLSupportedLanguages = {
   language: string;
   name: string;
   supports_formality: boolean;
-}
+};
 
 /**
  * The response from the DeepL API for POST /v2/translate.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
-interface DeepLTranslationResponse {
+type DeepLTranslationResponse = {
   translations: DeepLTranslationObj[];
-}
+};
 
 /**
  * The individual translated text object in the translated response
  * from DeepL API.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
-interface DeepLTranslationObj {
+type DeepLTranslationObj = {
   detected_source_language: string;
   text: string;
-}
+};
 
 /**
  * Create add-on menu on opening spreadsheet file.
@@ -76,14 +76,14 @@ function onOpen(): void {
 /**
  * Create add-on menu on installation of add-on.
  */
-function onInstall(): void {
+export function onInstall(): void {
   onOpen();
 }
 
 /**
  * Store DeepL API authentication key in user property.
  */
-function setDeeplAuthKey(): void {
+export function setDeeplAuthKey(): void {
   const ui = SpreadsheetApp.getUi();
   try {
     const promptResponse = ui.prompt(
@@ -117,7 +117,7 @@ function setDeeplAuthKey(): void {
 /**
  * Delete the stored DeepL API authentication key in user property.
  */
-function deleteDeeplAuthKey(): void {
+export function deleteDeeplAuthKey(): void {
   const ui = SpreadsheetApp.getUi();
   try {
     PropertiesService.getUserProperties().deleteProperty(UP_KEY_DEEPL_API_KEY);
@@ -133,7 +133,7 @@ function deleteDeeplAuthKey(): void {
 /**
  * Set source and target languages for translation.
  */
-function setLanguage(): void {
+export function setLanguage(): void {
   const ui = SpreadsheetApp.getUi();
   try {
     const up = PropertiesService.getUserProperties();
@@ -227,7 +227,7 @@ function setLanguage(): void {
  * Translate the selected cell range using DeepL API
  * and paste the result in the adjacent range.
  */
-function translateRange(): void {
+export function translateRange(): void {
   const ui = SpreadsheetApp.getUi();
   const activeSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const selectedRange = activeSheet.getActiveRange();
@@ -265,12 +265,12 @@ function translateRange(): void {
 
     const translatedText = sourceTextArr.map((row) => {
       const joinedRowText = row.join(ROW_SEPARATOR);
-      if (getBytes(encodeURIComponent(joinedRowText)) > THRESHOLD_BYTES) {
+      if (getBlobBytes(encodeURIComponent(joinedRowText)) > THRESHOLD_BYTES) {
         console.info(
           `[${ADDON_NAME}] ${joinedRowText} is longer than ${THRESHOLD_BYTES} bytes. Switching to per cell translation.`
         );
         return row.map((cellValue: string | number | boolean) => {
-          if (getBytes(encodeURIComponent(cellValue)) > THRESHOLD_BYTES) {
+          if (getBlobBytes(encodeURIComponent(cellValue)) > THRESHOLD_BYTES) {
             throw new Error(
               `[${ADDON_NAME}] Cell content is too long. Please consider splitting the content into multiple cells:\n${cellValue}`
             );
@@ -314,9 +314,9 @@ function translateRange(): void {
  * @returns Array of translated texts.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
-function deepLTranslate(
+export function deepLTranslate(
   sourceText: string | string[],
-  sourceLocale: string,
+  sourceLocale: string | null | undefined,
   targetLocale: string
 ): string[] {
   const endpoint = 'translate';
@@ -356,8 +356,6 @@ function deepLTranslate(
   // Handle error codes
   // See https://www.deepl.com/docs-api/api-access/error-handling/
   const responseCode = response.getResponseCode();
-  // console.log(`responseCode: ${responseCode}`);
-
   if (responseCode === 429) {
     throw new Error(
       `[${ADDON_NAME}] Too Many Requests: Try again after some time.`
@@ -390,7 +388,7 @@ function deepLTranslate(
  * @returns An array of the supported languages.
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
-function deepLGetLanguages(type = 'source'): DeepLSupportedLanguages[] {
+export function deepLGetLanguages(type = 'source'): DeepLSupportedLanguages[] {
   const endpoint = 'languages';
   // API key
   const apiKey =
@@ -418,7 +416,7 @@ function deepLGetLanguages(type = 'source'): DeepLSupportedLanguages[] {
  * @returns The relevant base URL for DeepL API
  * @see https://support.deepl.com/hc/en-us/articles/360021183620-DeepL-API-Free-vs-DeepL-API-Pro
  */
-function getDeepLApiBaseUrl(apiKey: string): string {
+export function getDeepLApiBaseUrl(apiKey: string): string {
   return apiKey.endsWith(':fx')
     ? DEEPL_API_BASE_URL_FREE
     : DEEPL_API_BASE_URL_PRO;
@@ -429,16 +427,6 @@ function getDeepLApiBaseUrl(apiKey: string): string {
  * @param text The string of which to get the bytes.
  * @returns The length of the given text in bytes.
  */
-function getBytes(text: string): number {
+export function getBlobBytes(text: string): number {
   return Utilities.newBlob(text).getBytes().length;
-}
-
-if (typeof module === 'object') {
-  module.exports = {
-    onInstall,
-    setDeeplAuthKey,
-    deleteDeeplAuthKey,
-    setLanguage,
-    translateRange,
-  };
 }
