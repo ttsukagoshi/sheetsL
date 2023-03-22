@@ -55,6 +55,13 @@ type DeepLTranslationObj = {
 };
 
 /**
+ * The type of language that should be returned in the GET request
+ * to the DeepL API to retrieve its supported languages.
+ * @see https://www.deepl.com/docs-api/general/get-languages/
+ */
+type DeepLLanguageType = 'source' | 'target';
+
+/**
  * Create add-on menu on opening spreadsheet file.
  */
 function onOpen(): void {
@@ -352,23 +359,12 @@ export function deepLTranslate(
   }
   // console.log(`url: ${url}`);
 
+  // Call the DeepL API translate request
   const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-  // Handle error codes
-  // See https://www.deepl.com/docs-api/api-access/error-handling/
-  const responseCode = response.getResponseCode();
-  if (responseCode === 429) {
-    throw new Error(
-      `[${ADDON_NAME}] Too Many Requests: Try again after some time.`
-    );
-  } else if (responseCode === 456) {
-    throw new Error(
-      `[${ADDON_NAME}] Quota Exceeded: The translation limit of your account has been reached.`
-    );
-  } else if (responseCode !== 200) {
-    throw new Error(
-      `[${ADDON_NAME}] Error on Calling DeepL API: ${response.getContentText()}`
-    );
-  }
+
+  // Handle DeepL API errors
+  handleDeepLErrors(response);
+
   const translatedTextObj: DeepLTranslationResponse = JSON.parse(
     response.getContentText()
   );
@@ -384,11 +380,13 @@ export function deepLTranslate(
 /**
  * Retrieve the list of languages that are currently supported for translation,
  * either as source or target language.
- * @param type Sets whether source or target languages should be listed. Takes either `source` or `target`.
+ * @param type The type of languages that should be listed.
  * @returns An array of the supported languages.
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
-export function deepLGetLanguages(type = 'source'): DeepLSupportedLanguages[] {
+export function deepLGetLanguages(
+  type: DeepLLanguageType = 'source'
+): DeepLSupportedLanguages[] {
   const endpoint = 'languages';
   // API key
   const apiKey =
@@ -402,11 +400,11 @@ export function deepLGetLanguages(type = 'source'): DeepLSupportedLanguages[] {
   // Call the DeepL API
   let url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
   const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-  if (response.getResponseCode() === 200) {
-    return JSON.parse(response.getContentText());
-  } else {
-    throw new Error(`[${ADDON_NAME}] ${response.getContentText()}`);
-  }
+
+  // Handle DeepL API errors
+  handleDeepLErrors(response);
+
+  return JSON.parse(response.getContentText());
 }
 
 /**
@@ -429,4 +427,32 @@ export function getDeepLApiBaseUrl(apiKey: string): string {
  */
 export function getBlobBytes(text: string): number {
   return Utilities.newBlob(text).getBytes().length;
+}
+
+/**
+ * Handle DeepL API errors based on the response code.
+ * @param response The UrlFetchApp.fetch response from the DeepL API
+ * @see https://www.deepl.com/docs-api/api-access/error-handling/
+ */
+export function handleDeepLErrors(
+  response: GoogleAppsScript.URL_Fetch.HTTPResponse
+): void {
+  const responseCode = response.getResponseCode();
+  if (responseCode === 429) {
+    throw new Error(
+      `[${ADDON_NAME}] Too Many Requests: Try again after some time.`
+    );
+  } else if (responseCode === 456) {
+    throw new Error(
+      `[${ADDON_NAME}] Quota Exceeded: The translation limit of your account has been reached.`
+    );
+  } else if (responseCode >= 500) {
+    throw new Error(
+      `[${ADDON_NAME}] Temporary errors in the DeepL service. Please retry after waiting for a while.`
+    );
+  } else if (responseCode !== 200) {
+    throw new Error(
+      `[${ADDON_NAME}] Error on Calling DeepL API: ${response.getContentText()}`
+    );
+  }
 }
