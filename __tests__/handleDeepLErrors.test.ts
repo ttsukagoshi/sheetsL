@@ -1,4 +1,6 @@
-import { ADDON_NAME, handleDeepLErrors } from '../src/sheetsl';
+import { handleDeepLErrors } from '../src/sheetsl';
+
+const ADDON_NAME = 'SheetsL';
 
 const successPattern = {
   title: 'HTTP Response Code 200',
