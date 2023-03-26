@@ -1,4 +1,6 @@
-import { ADDON_NAME, getDeepLApiKey } from '../src/sheetsl';
+import { getDeepLApiKey } from '../src/sheetsl';
+
+const ADDON_NAME = 'SheetsL';
 
 PropertiesService.getUserProperties = jest.fn(() => ({
   getProperty: jest.fn(() => undefined),
