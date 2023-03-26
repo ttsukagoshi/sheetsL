@@ -1,11 +1,15 @@
+// Jest tests for deepLTranslate() and deepLGetLanguages()
+
 import {
-  ADDON_NAME,
-  DEEPL_API_BASE_URL_FREE,
   deepLTranslate,
   deepLGetLanguages,
+  DeepLSupportedLanguages,
+  DeepLLanguageType,
 } from '../src/sheetsl';
 
-const translationUrl = DEEPL_API_BASE_URL_FREE + 'translate';
+const ADDON_NAME = 'SheetsL';
+const DEEPL_API_BASE_URL_FREE = 'https://api-free.deepl.com/v2/';
+const translateUrl = DEEPL_API_BASE_URL_FREE + 'translate';
 const getLanguageUrl = DEEPL_API_BASE_URL_FREE + 'languages';
 const mockApiKey = 'apiKeyString:fx';
 
@@ -19,18 +23,37 @@ UrlFetchApp.fetch = jest.fn((url: string, options: UrlFetchAppOptions) => ({
   getContentText: jest.fn((text: string = url) => {
     // Switch the returning value of the mock function for UrlFetchApp.fetch
     // depending on the input URL.
-    if (text.startsWith(translationUrl)) {
+    if (text.startsWith(translateUrl)) {
       // URL with the endpoint of DeepL API translation will return
       // a stringified object of type DeepLTranslationResponse
       return JSON.stringify({
         translations: [
           {
             detected_source_language: 'JA',
-            text: text,
+            text: text, // This mock translated text will return the string of the input URL for UrlFetchApp.fetch
           },
         ],
       });
     } else if (text.startsWith(getLanguageUrl)) {
+      // URL with the endpoint of DeepL API to retrieve the list of supported languages
+      // will return a stringified list of type DeepLSupportedLanguages objects.
+      return JSON.stringify([
+        {
+          language: 'EN-US',
+          name: 'English (American)',
+          supports_formality: false,
+        },
+        {
+          language: 'JA',
+          name: 'Japanese',
+          supports_formality: false,
+        },
+        {
+          language: 'MOCK',
+          name: text, // This mock language will return the string of the input URL for UrlFetchApp.fetch
+          supports_formality: true,
+        },
+      ]);
     }
   }),
 })) as any;
@@ -51,6 +74,12 @@ type DeepLTranslatePatternInput = {
   targetLocale: string;
 };
 
+type DeepLGetLanguages = {
+  title: string;
+  input: DeepLLanguageType;
+  expectedOutput: DeepLSupportedLanguages[];
+};
+
 const deepLTranslatePatterns: DeepLTranslatePattern[] = [
   {
     title: 'sourceText as string',
@@ -60,7 +89,7 @@ const deepLTranslatePatterns: DeepLTranslatePattern[] = [
       targetLocale: 'EN-US',
     },
     expectedOutput: [
-      `${translationUrl}?auth_key=${mockApiKey}&target_lang=EN-US&text=${encodeURIComponent(
+      `${translateUrl}?auth_key=${mockApiKey}&target_lang=EN-US&text=${encodeURIComponent(
         'text to translate'
       )}&source_lang=JA`,
     ],
@@ -77,7 +106,7 @@ const deepLTranslatePatterns: DeepLTranslatePattern[] = [
       targetLocale: 'EN-US',
     },
     expectedOutput: [
-      `${translationUrl}?auth_key=${mockApiKey}&target_lang=EN-US&text=${encodeURIComponent(
+      `${translateUrl}?auth_key=${mockApiKey}&target_lang=EN-US&text=${encodeURIComponent(
         'text to translate 1'
       )}&text=${encodeURIComponent(
         'text to translate 2'
@@ -98,7 +127,50 @@ const deepLTranslatePatternsWithErrors: DeepLTranslatePattern[] = [
   },
 ];
 
-const deepLGetLanguagePatterns = [];
+const deepLGetLanguagesPatterns: DeepLGetLanguages[] = [
+  {
+    title: 'type = source',
+    input: 'source',
+    expectedOutput: [
+      {
+        language: 'EN-US',
+        name: 'English (American)',
+        supports_formality: false,
+      },
+      {
+        language: 'JA',
+        name: 'Japanese',
+        supports_formality: false,
+      },
+      {
+        language: 'MOCK',
+        name: `${getLanguageUrl}?auth_key=${mockApiKey}&type=source`,
+        supports_formality: true,
+      },
+    ],
+  },
+  {
+    title: 'type = target',
+    input: 'target',
+    expectedOutput: [
+      {
+        language: 'EN-US',
+        name: 'English (American)',
+        supports_formality: false,
+      },
+      {
+        language: 'JA',
+        name: 'Japanese',
+        supports_formality: false,
+      },
+      {
+        language: 'MOCK',
+        name: `${getLanguageUrl}?auth_key=${mockApiKey}&type=target`,
+        supports_formality: true,
+      },
+    ],
+  },
+];
 
 describe.each(deepLTranslatePatterns)(
   'deepLTranslate',
@@ -114,7 +186,7 @@ describe.each(deepLTranslatePatterns)(
 // Error patterns in deepLTranslate
 describe.each(deepLTranslatePatternsWithErrors)(
   'deepLTranslate Errors',
-  ({ title, input, expectedOutput }) => {
+  ({ title, input }) => {
     test(`deepLTranslate error test: ${title}`, () => {
       expect(() => {
         deepLTranslate(
@@ -123,6 +195,15 @@ describe.each(deepLTranslatePatternsWithErrors)(
           input.targetLocale
         );
       }).toThrowError(new Error(`[${ADDON_NAME}] Empty input.`));
+    });
+  }
+);
+
+describe.each(deepLGetLanguagesPatterns)(
+  'deepLGetLanguages',
+  ({ title, input, expectedOutput }) => {
+    test(`deepLGetLanguages test: ${title}`, () => {
+      expect(deepLGetLanguages(input)).toEqual(expectedOutput);
     });
   }
 );
