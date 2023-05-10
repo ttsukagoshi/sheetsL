@@ -13,13 +13,13 @@
    limitations under the License.
  */
 
-export const ADDON_NAME = 'SheetsL';
+const ADDON_NAME = 'SheetsL';
 const UP_KEY_DEEPL_API_KEY = 'deeplApiKey'; // User property key for saving the DeepL API key
 const UP_KEY_SOURCE_LOCALE = 'sourceLocale'; // User property key for saving the source language for DeepL
 const UP_KEY_TARGET_LOCALE = 'targetLocale'; // User property key for saving the target language for DeepL
 const DEEPL_API_VERSION = 'v2'; // DeepL API version
-export const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
-export const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
+const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
+const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
 const ROW_SEPARATOR = '|||';
 
 // Threshold value of the length of the text to translate, in bytes. See https://developers.google.com/apps-script/guides/services/quotas#current_limitations
@@ -30,7 +30,7 @@ const THRESHOLD_BYTES = 1900;
  * GET request on /v2/languages returns an array of this object.
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
-type DeepLSupportedLanguages = {
+export type DeepLSupportedLanguages = {
   language: string;
   name: string;
   supports_formality: boolean;
@@ -59,7 +59,7 @@ type DeepLTranslationObj = {
  * to the DeepL API to retrieve its supported languages.
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
-type DeepLLanguageType = 'source' | 'target';
+export type DeepLLanguageType = 'source' | 'target';
 
 /**
  * Create add-on menu on opening spreadsheet file.
@@ -341,13 +341,7 @@ export function deepLTranslate(
   // console.log(`sourceTextCasted: ${sourceTextCasted}`);
 
   // API key
-  const apiKey =
-    PropertiesService.getUserProperties().getProperty(UP_KEY_DEEPL_API_KEY);
-  if (!apiKey) {
-    throw new Error(
-      `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
-    );
-  }
+  const apiKey = getDeepLApiKey();
   const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
   let url =
@@ -389,13 +383,7 @@ export function deepLGetLanguages(
 ): DeepLSupportedLanguages[] {
   const endpoint = 'languages';
   // API key
-  const apiKey =
-    PropertiesService.getUserProperties().getProperty(UP_KEY_DEEPL_API_KEY);
-  if (!apiKey) {
-    throw new Error(
-      `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
-    );
-  }
+  const apiKey = getDeepLApiKey();
   const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
   let url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
@@ -405,19 +393,6 @@ export function deepLGetLanguages(
   handleDeepLErrors(response);
 
   return JSON.parse(response.getContentText());
-}
-
-/**
- * Returns the DeepL API base URL. The URL depends on whether the user's account
- * is DeepL API Free or Pro. Auth keys of DeepL API Free end with `:fx`
- * @param apiKey The DeepL API Free/Pro Authentication Key
- * @returns The relevant base URL for DeepL API
- * @see https://support.deepl.com/hc/en-us/articles/360021183620-DeepL-API-Free-vs-DeepL-API-Pro
- */
-export function getDeepLApiBaseUrl(apiKey: string): string {
-  return apiKey.endsWith(':fx')
-    ? DEEPL_API_BASE_URL_FREE
-    : DEEPL_API_BASE_URL_PRO;
 }
 
 /**
@@ -455,4 +430,34 @@ export function handleDeepLErrors(
       `[${ADDON_NAME}] Error on Calling DeepL API: ${response.getContentText()}`
     );
   }
+}
+
+/**
+ * Get the string of DeepL API Authentication Key saved as a user property of the add-on.
+ * Throws an error if the key is not save in the user property.
+ * @returns The string of DeepL API Authentication Key saved as a user property of the add-on.
+ */
+export function getDeepLApiKey(): string {
+  const apiKey =
+    PropertiesService.getUserProperties().getProperty(UP_KEY_DEEPL_API_KEY);
+  if (!apiKey) {
+    throw new Error(
+      `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
+    );
+  } else {
+    return apiKey;
+  }
+}
+
+/**
+ * Returns the DeepL API base URL. The URL depends on whether the user's account
+ * is DeepL API Free or Pro. Auth keys of DeepL API Free end with `:fx`
+ * @param apiKey The DeepL API Free/Pro Authentication Key
+ * @returns The relevant base URL for DeepL API
+ * @see https://support.deepl.com/hc/en-us/articles/360021183620-DeepL-API-Free-vs-DeepL-API-Pro
+ */
+export function getDeepLApiBaseUrl(apiKey: string): string {
+  return apiKey.endsWith(':fx')
+    ? DEEPL_API_BASE_URL_FREE
+    : DEEPL_API_BASE_URL_PRO;
 }

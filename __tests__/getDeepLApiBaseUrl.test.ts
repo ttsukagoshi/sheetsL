@@ -1,8 +1,8 @@
-import {
-  DEEPL_API_BASE_URL_FREE,
-  DEEPL_API_BASE_URL_PRO,
-  getDeepLApiBaseUrl,
-} from '../src/sheetsl';
+import { getDeepLApiBaseUrl } from '../src/sheetsl';
+
+const DEEPL_API_VERSION = 'v2';
+const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
+const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
 
 const patterns = [
   {
