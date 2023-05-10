@@ -242,7 +242,7 @@ export function translateRange(): void {
   try {
     if (!userProperties[UP_KEY_TARGET_LOCALE]) {
       throw new Error(
-        `[${ADDON_NAME}] Target Language Unavailable: Set the target language at the Settings > Set Lanuguage of the add-on menu.`
+        `[${ADDON_NAME}] Target Language Unavailable: Set the target language in Settings > Set Language of the add-on menu.`
       );
     }
     if (!selectedRange) {
