@@ -5,7 +5,7 @@
 
 Google Sheets add-on to use DeepL translation. Translate the contents of the selected range and paste them in the range of cells adjacent to the original range.
 
-![SheetsL icon](https://www.scriptable-assets.page/assets/images/sheetsl/SheetsL_Application%20Card%20Banner_220.png)
+![SheetsL icon](https://www.scriptable-assets.page/assets/images/sheetsl/SheetsL_Application_Card_Banner_220.png)
 
 ## How to Use
 
