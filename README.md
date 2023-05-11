@@ -1,6 +1,6 @@
 # SheetsL - DeepL Translation for Google Sheets
 
-[![clasp](https://img.shields.io/badge/built%20with-clasp-4285f4.svg?style=flat-square)](https://github.com/google/clasp) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
+[![Get this add-on from Google Workspace Marketplace](https://img.shields.io/badge/Google%20Workspace%20Add--on-Available-green?style=flat-square)](https://workspace.google.com/marketplace/app/sheetsl/1006481107276) [![clasp](https://img.shields.io/badge/built%20with-clasp-4285f4.svg?style=flat-square)](https://github.com/google/clasp) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![CodeQL](https://github.com/ttsukagoshi/sheetsL/actions/workflows/codeql.yml/badge.svg)](https://github.com/ttsukagoshi/sheetsL/actions/workflows/codeql.yml) [![Lint Code Base](https://github.com/ttsukagoshi/sheetsL/actions/workflows/linter.yml/badge.svg)](https://github.com/ttsukagoshi/sheetsL/actions/workflows/linter.yml) [![Publish Release](https://github.com/ttsukagoshi/sheetsL/actions/workflows/deploy.yml/badge.svg)](https://github.com/ttsukagoshi/sheetsL/actions/workflows/deploy.yml)
 
 Google Sheets add-on to use DeepL translation. Translate the contents of the selected range and paste them in the range of cells adjacent to the original range.
@@ -9,7 +9,7 @@ Google Sheets add-on to use DeepL translation. Translate the contents of the sel
 
 ## How to Use
 
-Details of the add-on is described in the [app's web page](https://www.scriptable-assets.page/add-ons/sheetsl/).
+Install the add-on from the [Google Workspace Marketplace](https://workspace.google.com/marketplace/app/sheetsl/1006481107276). For details, see the [add-on's web page](https://www.scriptable-assets.page/add-ons/sheetsl/).
 
 ## Terms and Conditions
 
