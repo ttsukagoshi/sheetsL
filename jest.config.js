@@ -9,11 +9,8 @@ module.exports = {
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
   globals: {
-    /*
-    'ts-jest': {
-      diagnostics: false,
-    },*/
     PropertiesService: {},
+    SpreadsheetApp: {},
     UrlFetchApp: {},
     Utilities: {},
   },
