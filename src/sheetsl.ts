@@ -271,6 +271,9 @@ export function translateRange(): void {
 
     const translatedText = sourceTextArr.map((row) =>
       row.map((cellValue: string | number | boolean) => {
+        if (cellValue === '') {
+          return '';
+        }
         if (getBlobBytes(encodeURIComponent(cellValue)) > THRESHOLD_BYTES) {
           throw new Error(
             `[${ADDON_NAME}] Cell content is too long. Please consider splitting the content into multiple cells:\n${cellValue}`
