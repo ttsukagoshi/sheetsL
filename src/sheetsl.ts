@@ -298,7 +298,7 @@ export function translateRange(): void {
             Math.floor((cellValueString.length * THRESHOLD_BYTES) / textBytes)
           );
           throw new Error(
-            `[${ADDON_NAME}] Cell content length exceeds Google's limits. Please consider splitting the content into multiple cells. The following is the estimated maximum length of the cell in question:\n${truncatedCellValue}\n\nPlease note that this is a rough estimate and that the exact acceptable text length might differ slightly.`
+            `[${ADDON_NAME}] Cell content length exceeds Google's limits. Please consider splitting the content into multiple cells. The following is the estimated maximum length of the cell in question:\n${truncatedCellValue}\n\nPlease note that this is a rough estimate and that the actual acceptable text length might differ slightly.`
           );
         } else {
           Utilities.sleep(1000); // Interval to avoid concentrated access to API
