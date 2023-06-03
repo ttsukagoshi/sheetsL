@@ -50,9 +50,7 @@ class MockUi {
     this.isAddonMenu = true;
     return this;
   }
-  addToUi(): void {
-    console.log(JSON.stringify(ADDON_MENU));
-  }
+  addToUi(): void {}
   createAddonMenu(): this {
     this.isAddonMenu = true;
     return this;

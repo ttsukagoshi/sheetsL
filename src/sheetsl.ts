@@ -96,17 +96,7 @@ export function setDeeplAuthKey(): void {
       'Enter your DeepL API Authentication Key',
       ui.ButtonSet.OK_CANCEL
     );
-    if (promptResponse.getSelectedButton() !== ui.Button.OK) {
-      throw new Error(
-        `[${ADDON_NAME}] Canceled: Setting of DeepL Authentication Key has been canceled.`
-      );
-    }
-    const apiKey = promptResponse.getResponseText();
-    if (!apiKey || apiKey === '') {
-      throw new Error(
-        `[${ADDON_NAME}] You must enter a valid DeepL API Authentication Key.`
-      );
-    }
+    const apiKey = verifyAuthKeyPrompt(promptResponse, ui).getResponseText();
     PropertiesService.getUserProperties().setProperty(
       UP_KEY_DEEPL_API_KEY,
       apiKey
@@ -118,6 +108,32 @@ export function setDeeplAuthKey(): void {
     console.error(error.stack);
     ui.alert(error.message);
   }
+}
+
+/**
+ * Verify the prompt response in setDeeplAuthKey and return an error
+ * if the prompt is canceled or if an invalid DeepL API Authentication Key
+ * was entered.
+ * @param promptResponse Response object for the user prompt in setDeeplAuthKey
+ * to enter the user's DeepL API Authentication Key.
+ * @returns The entered prompt response object.
+ */
+export function verifyAuthKeyPrompt(
+  promptResponse: GoogleAppsScript.Base.PromptResponse,
+  ui: GoogleAppsScript.Base.Ui
+): GoogleAppsScript.Base.PromptResponse {
+  if (promptResponse.getSelectedButton() !== ui.Button.OK) {
+    throw new Error(
+      `[${ADDON_NAME}] Canceled: Setting of DeepL Authentication Key has been canceled.`
+    );
+  }
+  const apiKey = promptResponse.getResponseText();
+  if (!apiKey || apiKey === '') {
+    throw new Error(
+      `[${ADDON_NAME}] You must enter a valid DeepL API Authentication Key.`
+    );
+  }
+  return promptResponse;
 }
 
 /**
