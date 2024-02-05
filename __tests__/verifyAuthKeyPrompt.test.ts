@@ -77,15 +77,15 @@ describe.each(verifyAuthKeyPromptSuccessPatterns)(
   ({ testName, input, expectedOutput }) => {
     test(`${testName}: getSelectedButton`, () => {
       expect(
-        verifyAuthKeyPrompt(input.promptResponse, input.ui).getSelectedButton()
+        verifyAuthKeyPrompt(input.promptResponse, input.ui).getSelectedButton(),
       ).toBe(expectedOutput.getSelectedButton());
     });
     test(`${testName}: getResponseText`, () => {
       expect(
-        verifyAuthKeyPrompt(input.promptResponse, input.ui).getResponseText()
+        verifyAuthKeyPrompt(input.promptResponse, input.ui).getResponseText(),
       ).toBe(expectedOutput.getResponseText());
     });
-  }
+  },
 );
 
 describe.each(verifyAuthKeyPromptErrorPatterns)(
@@ -96,5 +96,5 @@ describe.each(verifyAuthKeyPromptErrorPatterns)(
         verifyAuthKeyPrompt(input.promptResponse, input.ui);
       }).toThrowError(new Error(expectedErrorMessage));
     });
-  }
+  },
 );

@@ -72,7 +72,7 @@ function onOpen(): void {
         .addItem('Set Auth Key', 'setDeeplAuthKey')
         .addItem('Delete Auth Key', 'deleteDeeplAuthKey')
         .addSeparator()
-        .addItem('Set Language', 'setLanguage')
+        .addItem('Set Language', 'setLanguage'),
     )
     .addSeparator()
     .addItem('Translate', 'translateRange')
@@ -94,15 +94,15 @@ export function setDeeplAuthKey(): void {
   try {
     const promptResponse = ui.prompt(
       'Enter your DeepL API Authentication Key',
-      ui.ButtonSet.OK_CANCEL
+      ui.ButtonSet.OK_CANCEL,
     );
     const apiKey = verifyAuthKeyPrompt(promptResponse, ui).getResponseText();
     PropertiesService.getUserProperties().setProperty(
       UP_KEY_DEEPL_API_KEY,
-      apiKey
+      apiKey,
     );
     ui.alert(
-      `[${ADDON_NAME}] Completed: Your DeepL API Authentication Key has been saved as a user property.`
+      `[${ADDON_NAME}] Completed: Your DeepL API Authentication Key has been saved as a user property.`,
     );
   } catch (error) {
     console.error(error.stack);
@@ -120,17 +120,17 @@ export function setDeeplAuthKey(): void {
  */
 export function verifyAuthKeyPrompt(
   promptResponse: GoogleAppsScript.Base.PromptResponse,
-  ui: GoogleAppsScript.Base.Ui
+  ui: GoogleAppsScript.Base.Ui,
 ): GoogleAppsScript.Base.PromptResponse {
   if (promptResponse.getSelectedButton() !== ui.Button.OK) {
     throw new Error(
-      `[${ADDON_NAME}] Canceled: Setting of DeepL Authentication Key has been canceled.`
+      `[${ADDON_NAME}] Canceled: Setting of DeepL Authentication Key has been canceled.`,
     );
   }
   const apiKey = promptResponse.getResponseText();
   if (!apiKey || apiKey === '') {
     throw new Error(
-      `[${ADDON_NAME}] You must enter a valid DeepL API Authentication Key.`
+      `[${ADDON_NAME}] You must enter a valid DeepL API Authentication Key.`,
     );
   }
   return promptResponse;
@@ -144,7 +144,7 @@ export function deleteDeeplAuthKey(): void {
   try {
     PropertiesService.getUserProperties().deleteProperty(UP_KEY_DEEPL_API_KEY);
     ui.alert(
-      `[${ADDON_NAME}] Complete: DeepL API Authentication Key has been deleted from your user property.`
+      `[${ADDON_NAME}] Complete: DeepL API Authentication Key has been deleted from your user property.`,
     );
   } catch (error) {
     console.error(error.stack);
@@ -165,11 +165,11 @@ export function setLanguage(): void {
       // Ask user whether to proceed if a target language is already set
       const alertProceed = ui.alert(
         `There is an existing language setting:\n - Source Language: ${userProperties[UP_KEY_SOURCE_LOCALE]}\n - Target Language: ${userProperties[UP_KEY_TARGET_LOCALE]}\n\nDo you want to update these values?`,
-        ui.ButtonSet.YES_NO
+        ui.ButtonSet.YES_NO,
       );
       if (alertProceed !== ui.Button.YES) {
         throw new Error(
-          `[${ADDON_NAME}] Canceled: Language setting has been canceled.`
+          `[${ADDON_NAME}] Canceled: Language setting has been canceled.`,
         );
       }
     }
@@ -182,14 +182,14 @@ export function setLanguage(): void {
       `In which language is the source text written? Enter the two-letter language code. Leave this value empty to use DeepL's language auto detection.\n\nAvailable values:\n${availableLocaleSource
         .map(
           (langObj: DeepLSupportedLanguages) =>
-            `- ${langObj.language} (${langObj.name})`
+            `- ${langObj.language} (${langObj.name})`,
         )
         .join('\n')}`,
-      ui.ButtonSet.OK_CANCEL
+      ui.ButtonSet.OK_CANCEL,
     );
     if (promptSourceLocale.getSelectedButton() !== ui.Button.OK) {
       throw new Error(
-        `[${ADDON_NAME}] Canceled: Language setting has been canceled.`
+        `[${ADDON_NAME}] Canceled: Language setting has been canceled.`,
       );
     }
     const responseSourceLocale = promptSourceLocale
@@ -202,7 +202,7 @@ export function setLanguage(): void {
       responseSourceLocale != ''
     ) {
       throw new Error(
-        `[${ADDON_NAME}] Invalid Value (${responseSourceLocale}): Enter a valid value.`
+        `[${ADDON_NAME}] Invalid Value (${responseSourceLocale}): Enter a valid value.`,
       );
     }
     // Target language
@@ -210,14 +210,14 @@ export function setLanguage(): void {
       `Into which language should the text be translated? Enter the two- or four-letter language code.\n\nAvailable values:\n${availableLocaleTarget
         .map(
           (langObj: DeepLSupportedLanguages) =>
-            `- ${langObj.language} (${langObj.name})`
+            `- ${langObj.language} (${langObj.name})`,
         )
         .join('\n')}`,
-      ui.ButtonSet.OK_CANCEL
+      ui.ButtonSet.OK_CANCEL,
     );
     if (promptTargetLocale.getSelectedButton() !== ui.Button.OK) {
       throw new Error(
-        `[${ADDON_NAME}] Canceled: Language setting has been canceled.`
+        `[${ADDON_NAME}] Canceled: Language setting has been canceled.`,
       );
     }
     const responseTargetLocale = promptTargetLocale
@@ -229,7 +229,7 @@ export function setLanguage(): void {
         .includes(responseTargetLocale)
     ) {
       throw new Error(
-        `[${ADDON_NAME}] Invalid Value (${responseTargetLocale}): Enter a valid value.`
+        `[${ADDON_NAME}] Invalid Value (${responseTargetLocale}): Enter a valid value.`,
       );
     }
     // Set the values as user properties
@@ -257,7 +257,7 @@ export function translateRange(): void {
   try {
     if (!userProperties[UP_KEY_TARGET_LOCALE]) {
       throw new Error(
-        `[${ADDON_NAME}] Target Language Unavailable: Set the target language in Settings > Set Language of the add-on menu.`
+        `[${ADDON_NAME}] Target Language Unavailable: Set the target language in Settings > Set Language of the add-on menu.`,
       );
     }
     if (!selectedRange) {
@@ -269,12 +269,12 @@ export function translateRange(): void {
       selectedRange.getRow(),
       selectedRange.getColumn() + selectedRangeNumCol,
       selectedRange.getNumRows(),
-      selectedRangeNumCol
+      selectedRangeNumCol,
     );
     if (!targetRange.isBlank()) {
       const alertOverwrite = ui.alert(
         'Translated text(s) will be pasted in the cell(s) to the right of the currently selected range. This target area is not empty.\nContinuing this process will overwrite the contents.\n\nAre you sure you want to continue?',
-        ui.ButtonSet.OK_CANCEL
+        ui.ButtonSet.OK_CANCEL,
       );
       if (alertOverwrite !== ui.Button.OK) {
         throw new Error(`[${ADDON_NAME}] Translation canceled.`);
@@ -295,10 +295,10 @@ export function translateRange(): void {
           const cellValueString = cellValue.toString();
           const truncatedCellValue = cellValueString.slice(
             0,
-            Math.floor((cellValueString.length * THRESHOLD_BYTES) / textBytes)
+            Math.floor((cellValueString.length * THRESHOLD_BYTES) / textBytes),
           );
           throw new Error(
-            `[${ADDON_NAME}] Cell content length exceeds Google's limits. Please consider splitting the content into multiple cells. The following is the estimated maximum length of the cell in question:\n${truncatedCellValue}\n\nPlease note that this is a rough estimate and that the actual acceptable text length might differ slightly.`
+            `[${ADDON_NAME}] Cell content length exceeds Google's limits. Please consider splitting the content into multiple cells. The following is the estimated maximum length of the cell in question:\n${truncatedCellValue}\n\nPlease note that this is a rough estimate and that the actual acceptable text length might differ slightly.`,
           );
         } else {
           Utilities.sleep(1000); // Interval to avoid concentrated access to API
@@ -306,10 +306,10 @@ export function translateRange(): void {
           return deepLTranslate(
             cellValue.toString(),
             userProperties[UP_KEY_SOURCE_LOCALE],
-            userProperties[UP_KEY_TARGET_LOCALE]
+            userProperties[UP_KEY_TARGET_LOCALE],
           )[0];
         }
-      })
+      }),
     );
     // console.log(`translatedText: ${JSON.stringify(translatedText)}`);
 
@@ -334,7 +334,7 @@ export function translateRange(): void {
 export function deepLTranslate(
   sourceText: string | string[],
   sourceLocale: string | null | undefined,
-  targetLocale: string
+  targetLocale: string,
 ): string[] {
   const endpoint = 'translate';
   let sourceTextCasted: string;
@@ -370,11 +370,11 @@ export function deepLTranslate(
   handleDeepLErrors(response);
 
   const translatedTextObj: DeepLTranslationResponse = JSON.parse(
-    response.getContentText()
+    response.getContentText(),
   );
   const translatedText: string[] = translatedTextObj.translations.map(
     (translationsResponse: DeepLTranslationObj): string =>
-      translationsResponse.text
+      translationsResponse.text,
   );
   // console.log(`translatedText: ${JSON.stringify(translatedText)}`);
 
@@ -389,7 +389,7 @@ export function deepLTranslate(
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
 export function deepLGetLanguages(
-  type: DeepLLanguageType = 'source'
+  type: DeepLLanguageType = 'source',
 ): DeepLSupportedLanguages[] {
   const endpoint = 'languages';
   // API key
@@ -420,24 +420,24 @@ export function getBlobBytes(text: string): number {
  * @see https://www.deepl.com/docs-api/api-access/error-handling/
  */
 export function handleDeepLErrors(
-  response: GoogleAppsScript.URL_Fetch.HTTPResponse
+  response: GoogleAppsScript.URL_Fetch.HTTPResponse,
 ): void {
   const responseCode = response.getResponseCode();
   if (responseCode === 429) {
     throw new Error(
-      `[${ADDON_NAME}] Too Many Requests: Try again after some time.`
+      `[${ADDON_NAME}] Too Many Requests: Try again after some time.`,
     );
   } else if (responseCode === 456) {
     throw new Error(
-      `[${ADDON_NAME}] Quota Exceeded: The translation limit of your account has been reached.`
+      `[${ADDON_NAME}] Quota Exceeded: The translation limit of your account has been reached.`,
     );
   } else if (responseCode >= 500) {
     throw new Error(
-      `[${ADDON_NAME}] Temporary errors in the DeepL service. Please retry after waiting for a while.`
+      `[${ADDON_NAME}] Temporary errors in the DeepL service. Please retry after waiting for a while.`,
     );
   } else if (responseCode !== 200) {
     throw new Error(
-      `[${ADDON_NAME}] Error on Calling DeepL API: ${response.getContentText()}`
+      `[${ADDON_NAME}] Error on Calling DeepL API: ${response.getContentText()}`,
     );
   }
 }
@@ -452,7 +452,7 @@ export function getDeepLApiKey(): string {
     PropertiesService.getUserProperties().getProperty(UP_KEY_DEEPL_API_KEY);
   if (!apiKey) {
     throw new Error(
-      `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`
+      `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`,
     );
   } else {
     return apiKey;

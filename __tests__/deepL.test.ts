@@ -90,7 +90,7 @@ const deepLTranslatePatterns: DeepLTranslatePattern[] = [
     },
     expectedOutput: [
       `${translateUrl}?auth_key=${mockApiKey}&target_lang=EN-US&text=${encodeURIComponent(
-        'text to translate'
+        'text to translate',
       )}&source_lang=JA`,
     ],
   },
@@ -107,9 +107,9 @@ const deepLTranslatePatterns: DeepLTranslatePattern[] = [
     },
     expectedOutput: [
       `${translateUrl}?auth_key=${mockApiKey}&target_lang=EN-US&text=${encodeURIComponent(
-        'text to translate 1'
+        'text to translate 1',
       )}&text=${encodeURIComponent(
-        'text to translate 2'
+        'text to translate 2',
       )}&text=${encodeURIComponent('text to translate 3')}&source_lang=JA`,
     ],
   },
@@ -177,10 +177,14 @@ describe.each(deepLTranslatePatterns)(
   ({ title, input, expectedOutput }) => {
     test(`deepLTranslate test: ${title}`, () => {
       expect(
-        deepLTranslate(input.sourceText, input.sourceLocale, input.targetLocale)
+        deepLTranslate(
+          input.sourceText,
+          input.sourceLocale,
+          input.targetLocale,
+        ),
       ).toEqual(expectedOutput);
     });
-  }
+  },
 );
 
 // Error patterns in deepLTranslate
@@ -192,11 +196,11 @@ describe.each(deepLTranslatePatternsWithErrors)(
         deepLTranslate(
           input.sourceText,
           input.sourceLocale,
-          input.targetLocale
+          input.targetLocale,
         );
       }).toThrowError(new Error(`[${ADDON_NAME}] Empty input.`));
     });
-  }
+  },
 );
 
 describe.each(deepLGetLanguagesPatterns)(
@@ -205,5 +209,5 @@ describe.each(deepLGetLanguagesPatterns)(
     test(`deepLGetLanguages test: ${title}`, () => {
       expect(deepLGetLanguages(input)).toEqual(expectedOutput);
     });
-  }
+  },
 );
