@@ -23,5 +23,5 @@ describe.each(patterns)(
     test(`getDeepLApiBaseUrl test: ${title}`, () => {
       expect(getDeepLApiBaseUrl(input)).toBe(expectedOutput);
     });
-  }
+  },
 );

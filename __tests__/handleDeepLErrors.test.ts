@@ -66,5 +66,5 @@ describe.each(errorPatterns)(
         handleDeepLErrors(inputResponse);
       }).toThrowError(new Error(expectedErrorMessage));
     });
-  }
+  },
 );
