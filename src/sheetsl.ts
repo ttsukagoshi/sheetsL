@@ -61,6 +61,14 @@ type DeepLTranslationObj = {
 export type DeepLLanguageType = 'source' | 'target';
 
 /**
+ * The type of the object containing key-values pairs to set in the properties of the Google Apps Script.
+ * @see https://developers.google.com/apps-script/reference/properties/properties#setpropertiesproperties
+ */
+type PropertiesObj = {
+  [key: string]: string;
+};
+
+/**
  * Create add-on menu on opening spreadsheet file.
  */
 function onOpen(): void {
@@ -105,8 +113,8 @@ export function setDeeplAuthKey(): void {
       `[${ADDON_NAME}] Completed: Your DeepL API Authentication Key has been saved as a user property.`,
     );
   } catch (error) {
-    console.error(error.stack);
-    ui.alert(error.message);
+    console.error((error as Error).stack);
+    ui.alert((error as Error).message);
   }
 }
 
@@ -147,8 +155,8 @@ export function deleteDeeplAuthKey(): void {
       `[${ADDON_NAME}] Complete: DeepL API Authentication Key has been deleted from your user property.`,
     );
   } catch (error) {
-    console.error(error.stack);
-    ui.alert(error.message);
+    console.error((error as Error).stack);
+    ui.alert((error as Error).message);
   }
 }
 
@@ -233,15 +241,15 @@ export function setLanguage(): void {
       );
     }
     // Set the values as user properties
-    let setObj = {};
+    let setObj: PropertiesObj = {};
     setObj[UP_KEY_SOURCE_LOCALE] = responseSourceLocale;
     setObj[UP_KEY_TARGET_LOCALE] = responseTargetLocale;
     up.setProperties(setObj, false);
     // Complete
     ui.alert('Completed: Language setting has been completed.');
   } catch (error) {
-    console.error(error.stack);
-    ui.alert(error.message);
+    console.error((error as Error).stack);
+    ui.alert((error as Error).message);
   }
 }
 
@@ -318,8 +326,8 @@ export function translateRange(): void {
     // Complete
     ui.alert('Complete: Translation has been completed.');
   } catch (error) {
-    console.error(error.stack);
-    ui.alert(error.message);
+    console.error((error as Error).stack);
+    ui.alert((error as Error).message);
   }
 }
 
