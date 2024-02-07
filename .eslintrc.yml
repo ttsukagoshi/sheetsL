@@ -21,6 +21,12 @@ parserOptions:
   project: true
   ecmaVersion: 2018
   sourceType: module
+overrides:
+  - files: ['tests/**/*.ts']
+    plugins: ['jest']
+    rules:
+      '@typescript-eslint/unbound-method': 'off'
+      'jest/unbound-method': 'error'
 
 ###########
 # Plugins #
