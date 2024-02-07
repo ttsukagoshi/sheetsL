@@ -338,7 +338,7 @@ export function translateRange(): void {
  * @see https://www.deepl.com/docs-api/translate-text/
  */
 export function deepLTranslate(
-  sourceText: string | string[],
+  sourceText: string | string[] | null | undefined,
   sourceLocale: string | null | undefined,
   targetLocale: string,
 ): string[] {
