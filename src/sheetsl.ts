@@ -29,29 +29,29 @@ const THRESHOLD_BYTES = 1900;
  * GET request on /v2/languages returns an array of this object.
  * @see https://www.deepl.com/docs-api/general/get-languages/
  */
-export type DeepLSupportedLanguages = {
+export interface DeepLSupportedLanguages {
   language: string;
   name: string;
   supports_formality: boolean;
-};
+}
 
 /**
  * The response from the DeepL API for POST /v2/translate.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
-type DeepLTranslationResponse = {
+interface DeepLTranslationResponse {
   translations: DeepLTranslationObj[];
-};
+}
 
 /**
  * The individual translated text object in the translated response
  * from DeepL API.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
-type DeepLTranslationObj = {
+interface DeepLTranslationObj {
   detected_source_language: string;
   text: string;
-};
+}
 
 /**
  * The type of language that should be returned in the GET request
@@ -64,9 +64,7 @@ export type DeepLLanguageType = 'source' | 'target';
  * The type of the object containing key-values pairs to set in the properties of the Google Apps Script.
  * @see https://developers.google.com/apps-script/reference/properties/properties#setpropertiesproperties
  */
-type PropertiesObj = {
-  [key: string]: string;
-};
+type PropertiesObj = Record<string, string>;
 
 /**
  * Create add-on menu on opening spreadsheet file.
@@ -77,8 +75,8 @@ function onOpen(): void {
     .addSubMenu(
       ui
         .createMenu('Settings')
-        .addItem('Set Auth Key', 'setDeeplAuthKey')
-        .addItem('Delete Auth Key', 'deleteDeeplAuthKey')
+        .addItem('Set DeepL API Key', 'setDeeplApiKey')
+        .addItem('Delete DeepL API Key', 'deleteDeeplApiKey')
         .addSeparator()
         .addItem('Set Language', 'setLanguage'),
     )
@@ -97,14 +95,14 @@ export function onInstall(): void {
 /**
  * Store DeepL API authentication key in user property.
  */
-export function setDeeplAuthKey(): void {
+export function setDeeplApiKey(): void {
   const ui = SpreadsheetApp.getUi();
   try {
     const promptResponse = ui.prompt(
       'Enter your DeepL API Authentication Key',
       ui.ButtonSet.OK_CANCEL,
     );
-    const apiKey = verifyAuthKeyPrompt(promptResponse, ui).getResponseText();
+    const apiKey = verifyApiKeyPrompt(promptResponse, ui).getResponseText();
     PropertiesService.getUserProperties().setProperty(
       UP_KEY_DEEPL_API_KEY,
       apiKey,
@@ -119,14 +117,14 @@ export function setDeeplAuthKey(): void {
 }
 
 /**
- * Verify the prompt response in setDeeplAuthKey and return an error
+ * Verify the prompt response in setDeeplApiKey and return an error
  * if the prompt is canceled or if an invalid DeepL API Authentication Key
  * was entered.
- * @param promptResponse Response object for the user prompt in setDeeplAuthKey
+ * @param promptResponse Response object for the user prompt in setDeeplApiKey
  * to enter the user's DeepL API Authentication Key.
  * @returns The entered prompt response object.
  */
-export function verifyAuthKeyPrompt(
+export function verifyApiKeyPrompt(
   promptResponse: GoogleAppsScript.Base.PromptResponse,
   ui: GoogleAppsScript.Base.Ui,
 ): GoogleAppsScript.Base.PromptResponse {
@@ -147,7 +145,7 @@ export function verifyAuthKeyPrompt(
 /**
  * Delete the stored DeepL API authentication key in user property.
  */
-export function deleteDeeplAuthKey(): void {
+export function deleteDeeplApiKey(): void {
   const ui = SpreadsheetApp.getUi();
   try {
     PropertiesService.getUserProperties().deleteProperty(UP_KEY_DEEPL_API_KEY);
@@ -241,7 +239,7 @@ export function setLanguage(): void {
       );
     }
     // Set the values as user properties
-    let setObj: PropertiesObj = {};
+    const setObj: PropertiesObj = {};
     setObj[UP_KEY_SOURCE_LOCALE] = responseSourceLocale;
     setObj[UP_KEY_TARGET_LOCALE] = responseTargetLocale;
     up.setProperties(setObj, false);
@@ -372,14 +370,13 @@ export function deepLTranslate(
   // console.log(`url: ${url}`);
 
   // Call the DeepL API translate request
-  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-
-  // Handle DeepL API errors
-  handleDeepLErrors(response);
-
-  const translatedTextObj: DeepLTranslationResponse = JSON.parse(
-    response.getContentText(),
+  const response = handleDeepLErrors(
+    UrlFetchApp.fetch(url, { muteHttpExceptions: true }),
   );
+
+  const translatedTextObj = JSON.parse(
+    response.getContentText(),
+  ) as DeepLTranslationResponse;
   const translatedText: string[] = translatedTextObj.translations.map(
     (translationsResponse: DeepLTranslationObj): string =>
       translationsResponse.text,
@@ -404,13 +401,12 @@ export function deepLGetLanguages(
   const apiKey = getDeepLApiKey();
   const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
-  let url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
-  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  const url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
+  const response = handleDeepLErrors(
+    UrlFetchApp.fetch(url, { muteHttpExceptions: true }),
+  );
 
-  // Handle DeepL API errors
-  handleDeepLErrors(response);
-
-  return JSON.parse(response.getContentText());
+  return JSON.parse(response.getContentText()) as DeepLSupportedLanguages[];
 }
 
 /**
@@ -424,12 +420,13 @@ export function getBlobBytes(text: string): number {
 
 /**
  * Handle DeepL API errors based on the response code.
+ * Returns the entered response if the response code is 200.
  * @param response The UrlFetchApp.fetch response from the DeepL API
  * @see https://www.deepl.com/docs-api/api-access/error-handling/
  */
 export function handleDeepLErrors(
   response: GoogleAppsScript.URL_Fetch.HTTPResponse,
-): void {
+): GoogleAppsScript.URL_Fetch.HTTPResponse {
   const responseCode = response.getResponseCode();
   if (responseCode === 429) {
     throw new Error(
@@ -448,6 +445,7 @@ export function handleDeepLErrors(
       `[${ADDON_NAME}] Error on Calling DeepL API: ${response.getContentText()}`,
     );
   }
+  return response;
 }
 
 /**
