@@ -1,21 +1,29 @@
 import { getDeepLApiKey } from '../src/sheetsl';
 
-const ADDON_NAME = 'SheetsL';
-
-PropertiesService.getUserProperties = jest.fn(() => ({
-  getProperty: jest.fn(() => undefined),
-})) as any;
-
-const testObj = {
-  title:
-    'Case when DeepL API Authentication Key is not saved in the user property',
-  errorMessage: `[${ADDON_NAME}] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.`,
-};
-
-describe('getDeepLApiKey Error', () => {
-  test(testObj.title, () => {
-    expect(() => {
-      getDeepLApiKey();
-    }).toThrowError(new Error(testObj.errorMessage));
+describe('getDeepLApiKey', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+  it('should get the DeepL API key from the user properties and return it', () => {
+    const mockApiKey = 'Sample-API-key:fx';
+    global.PropertiesService = {
+      getUserProperties: jest.fn(() => ({
+        getProperty: jest.fn(() => mockApiKey),
+      })),
+    } as unknown as GoogleAppsScript.Properties.PropertiesService;
+    const result = getDeepLApiKey();
+    expect(result).toBe(mockApiKey);
+  });
+  it('should throw an error if the DeepL API key is not saved in the user properties', () => {
+    global.PropertiesService = {
+      getUserProperties: jest.fn(() => ({
+        getProperty: jest.fn(() => null),
+      })),
+    } as unknown as GoogleAppsScript.Properties.PropertiesService;
+    expect(() => getDeepLApiKey()).toThrow(
+      new Error(
+        '[SheetsL] API Key Unavailable: Set the DeepL API Authentication Key from the Settings > Set Auth Key of the add-on menu.',
+      ),
+    );
   });
 });
