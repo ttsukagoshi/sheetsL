@@ -91,7 +91,7 @@ function onOpen(): void {
         .addItem('Set Language', 'setLanguage'),
     )
     .addSeparator()
-    .addItem('Translate', 'translateRange')
+    .addItem('Translate', 'translateSelectedRange')
     .addToUi();
 }
 
@@ -265,18 +265,20 @@ export function setLanguage(): void {
  * Translate the selected cell range using DeepL API
  * and paste the result in the adjacent range.
  */
-export function translateRange(): void {
+export function translateSelectedRange(): void {
   const ui = SpreadsheetApp.getUi();
   const activeSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const selectedRange = activeSheet.getActiveRange();
   const userProperties = PropertiesService.getUserProperties().getProperties();
   try {
     if (!userProperties[UP_KEY_TARGET_LOCALE]) {
+      // If the target language is not set, throw an error
       throw new Error(
         `[${ADDON_NAME}] Target Language Unavailable: Set the target language in Settings > Set Language of the add-on menu.`,
       );
     }
     if (!selectedRange) {
+      // If no cell is selected, throw an error
       throw new Error(`[${ADDON_NAME}] Select cells to translate.`);
     }
     // Check target range, i.e., the range where translated texts will be placed
@@ -288,6 +290,7 @@ export function translateRange(): void {
       selectedRangeNumCol,
     );
     if (!targetRange.isBlank()) {
+      // If the target range is not empty, ask the user whether to proceed and overwrite the contents
       const alertOverwrite = ui.alert(
         'Translated text(s) will be pasted in the cell(s) to the right of the currently selected range. This target area is not empty.\nContinuing this process will overwrite the contents.\n\nAre you sure you want to continue?',
         ui.ButtonSet.OK_CANCEL,
@@ -299,8 +302,8 @@ export function translateRange(): void {
 
     // Get the source text
     const sourceTextArr = selectedRange.getValues();
-    // console.log(`sourceTextArr: ${JSON.stringify(sourceTextArr)}`);
 
+    /*
     const translatedText = sourceTextArr.map((row) =>
       row.map((cellValue: string | number | boolean) => {
         if (cellValue === '') {
@@ -327,7 +330,7 @@ export function translateRange(): void {
         }
       }),
     );
-    // console.log(`translatedText: ${JSON.stringify(translatedText)}`);
+    */
 
     // Set translated text in target range
     targetRange.setValues(translatedText);

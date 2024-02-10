@@ -1,6 +1,6 @@
-import { translateRange } from '../src/sheetsl';
+import { translateSelectedRange } from '../src/sheetsl';
 
-describe('translateRange', () => {
+describe('translateSelectedRange', () => {
   beforeEach(() => {
     global.UrlFetchApp = {
       fetch: jest.fn(() => ({
@@ -62,7 +62,7 @@ describe('translateRange', () => {
       })),
       sleep: jest.fn(),
     } as unknown as GoogleAppsScript.Utilities.Utilities;
-    translateRange();
+    translateSelectedRange();
     expect(global.Utilities.sleep).toHaveBeenCalledTimes(5);
     expect(global.UrlFetchApp.fetch).toHaveBeenCalledTimes(5);
     expect(console.error).not.toHaveBeenCalled();
@@ -95,7 +95,7 @@ describe('translateRange', () => {
           getProperties: jest.fn(() => ({})), // mock target locale NOT set
         })),
       } as unknown as GoogleAppsScript.Properties.PropertiesService;
-      translateRange();
+      translateSelectedRange();
       expect(global.Utilities.sleep).not.toHaveBeenCalled();
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
@@ -122,7 +122,7 @@ describe('translateRange', () => {
           })),
         })),
       } as unknown as GoogleAppsScript.Properties.PropertiesService;
-      translateRange();
+      translateSelectedRange();
       expect(global.Utilities.sleep).not.toHaveBeenCalled();
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
@@ -180,7 +180,7 @@ describe('translateRange', () => {
         })),
         sleep: jest.fn(),
       } as unknown as GoogleAppsScript.Utilities.Utilities;
-      translateRange();
+      translateSelectedRange();
       expect(global.Utilities.sleep).not.toHaveBeenCalled();
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
@@ -233,7 +233,7 @@ describe('translateRange', () => {
         })),
         sleep: jest.fn(),
       } as unknown as GoogleAppsScript.Utilities.Utilities;
-      translateRange();
+      translateSelectedRange();
       expect(global.Utilities.sleep).not.toHaveBeenCalled();
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
