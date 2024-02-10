@@ -36,6 +36,16 @@ export interface DeepLSupportedLanguages {
 }
 
 /**
+ * The request payload to the DeepL API for POST /v2/translate.
+ * @see https://www.deepl.com/docs-api/translate-text/
+ */
+interface DeepLTranslationRequest {
+  text: string[];
+  target_lang: string;
+  source_lang?: string;
+}
+
+/**
  * The response from the DeepL API for POST /v2/translate.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
@@ -343,36 +353,37 @@ export function deepLTranslate(
   targetLocale: string,
 ): string[] {
   const endpoint = 'translate';
-  let sourceTextCasted: string;
+  let sourceTexts: string[];
   if (!sourceText || sourceText.length === 0) {
     throw new Error(`[${ADDON_NAME}] Empty input.`);
-  }
-  if (Array.isArray(sourceText)) {
-    sourceTextCasted = sourceText
-      .map((text) => `text=${encodeURIComponent(text)}`)
-      .join('&');
+  } else if (Array.isArray(sourceText)) {
+    sourceTexts = sourceText;
   } else {
-    sourceTextCasted = `text=${encodeURIComponent(sourceText)}`;
+    sourceTexts = [sourceText];
   }
-  // console.log(`sourceTextCasted: ${sourceTextCasted}`);
 
   // API key
   const apiKey = getDeepLApiKey();
   const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
-  let url =
-    baseUrl +
-    endpoint +
-    `?auth_key=${apiKey}&target_lang=${targetLocale}&${sourceTextCasted}`;
+  const url = baseUrl + endpoint;
+  const payload: DeepLTranslationRequest = {
+    text: sourceTexts,
+    target_lang: targetLocale,
+  };
   if (sourceLocale) {
-    url += `&source_lang=${sourceLocale}`;
+    payload.source_lang = sourceLocale;
   }
-  // console.log(`url: ${url}`);
+  const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: `DeepL-Auth-Key ${apiKey}` },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
 
   // Call the DeepL API translate request
-  const response = handleDeepLErrors(
-    UrlFetchApp.fetch(url, { muteHttpExceptions: true }),
-  );
+  const response = handleDeepLErrors(UrlFetchApp.fetch(url, options));
 
   const translatedTextObj = JSON.parse(
     response.getContentText(),
@@ -381,7 +392,6 @@ export function deepLTranslate(
     (translationsResponse: DeepLTranslationObj): string =>
       translationsResponse.text,
   );
-  // console.log(`translatedText: ${JSON.stringify(translatedText)}`);
 
   return translatedText;
 }
@@ -428,6 +438,7 @@ export function handleDeepLErrors(
   response: GoogleAppsScript.URL_Fetch.HTTPResponse,
 ): GoogleAppsScript.URL_Fetch.HTTPResponse {
   const responseCode = response.getResponseCode();
+  console.log(`responseCode: ${responseCode}`, response.getContentText());
   if (responseCode === 429) {
     throw new Error(
       `[${ADDON_NAME}] Too Many Requests: Try again after some time.`,
