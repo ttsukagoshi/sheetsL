@@ -21,8 +21,12 @@ const DEEPL_API_VERSION = 'v2'; // DeepL API version
 const DEEPL_API_BASE_URL_FREE = `https://api-free.deepl.com/${DEEPL_API_VERSION}/`;
 const DEEPL_API_BASE_URL_PRO = `https://api.deepl.com/${DEEPL_API_VERSION}/`;
 
-// Threshold value of the length of the text to translate, in bytes. See https://developers.google.com/apps-script/guides/services/quotas#current_limitations
-const THRESHOLD_BYTES = 1900;
+const MAX_TEXT_NUM = 50; // Maximum number of texts to translate in a single request
+// Threshold value of the length of the text to translate, in bytes.
+// From the DeepL API Doc: "The total request body size must not exceed 128 KiB (128 · 1024 bytes)."
+// See https://www.deepl.com/docs-api/translate-text
+// The constant part of the request body is approx. 200 bytes, so we'll set the limit to 127 * 1028 bytes with a margin
+const THRESHOLD_BYTES = 127 * 1028;
 
 /**
  * The JavaScript object of a DeepL-supported language.
@@ -40,7 +44,7 @@ export interface DeepLSupportedLanguages {
  * @see https://www.deepl.com/docs-api/translate-text/
  */
 interface DeepLTranslationRequest {
-  text: string[];
+  text: (string | number)[];
   target_lang: string;
   source_lang?: string;
 }
@@ -303,37 +307,14 @@ export function translateSelectedRange(): void {
     // Get the source text
     const sourceTextArr = selectedRange.getValues();
 
-    /*
-    const translatedText = sourceTextArr.map((row) =>
-      row.map((cellValue: string | number | boolean) => {
-        if (cellValue === '') {
-          return '';
-        }
-        const textBytes = getBlobBytes(encodeURIComponent(cellValue));
-        if (textBytes > THRESHOLD_BYTES) {
-          const cellValueString = cellValue.toString();
-          const truncatedCellValue = cellValueString.slice(
-            0,
-            Math.floor((cellValueString.length * THRESHOLD_BYTES) / textBytes),
-          );
-          throw new Error(
-            `[${ADDON_NAME}] Cell content length exceeds Google's limits. Please consider splitting the content into multiple cells. The following is the estimated maximum length of the cell in question:\n${truncatedCellValue}\n\nPlease note that this is a rough estimate and that the actual acceptable text length might differ slightly.`,
-          );
-        } else {
-          Utilities.sleep(1000); // Interval to avoid concentrated access to API
-          // Cell-based translation
-          return deepLTranslate(
-            cellValue.toString(),
-            userProperties[UP_KEY_SOURCE_LOCALE],
-            userProperties[UP_KEY_TARGET_LOCALE],
-          )[0];
-        }
-      }),
-    );
-    */
-
     // Set translated text in target range
-    targetRange.setValues(translatedText);
+    targetRange.setValues(
+      translateRange(
+        sourceTextArr as (string | number)[][],
+        userProperties[UP_KEY_TARGET_LOCALE],
+        userProperties[UP_KEY_SOURCE_LOCALE],
+      ),
+    );
     // Complete
     ui.alert('Complete: Translation has been completed.');
   } catch (error) {
@@ -343,21 +324,98 @@ export function translateSelectedRange(): void {
 }
 
 /**
+ * Translate the given 2-dimension array of texts using DeepL API
+ * and return the translated texts in the same format.
+ * @param sourceTextArr 2-dimension array of texts to translate
+ * @returns 2-dimension array of translated texts
+ * @see https://www.deepl.com/docs-api/translate-text
+ */
+export function translateRange(
+  sourceTextArr: (string | number)[][],
+  targetLocale: string,
+  sourceLocale?: string,
+): string[][] {
+  const columnNumber = sourceTextArr[0].length;
+  const translatedRangeFlat = splitLongArray(
+    // Split the array into multiple arrays if the total length of the array exceeds the given maximum length
+    // or if the total length of the stringified array in bytes exceeds the given maximum bytes
+    sourceTextArr.flat(),
+    MAX_TEXT_NUM,
+    THRESHOLD_BYTES,
+  )
+    .map((arr) => deepLTranslate(arr, targetLocale, sourceLocale))
+    .flat();
+  return translatedRangeFlat.reduce((acc, _, i, arr) => {
+    if (i % columnNumber === 0) {
+      acc.push(arr.slice(i, i + columnNumber));
+    }
+    return acc;
+  }, [] as string[][]);
+}
+
+/**
+ * Split the given array into multiple arrays
+ * if the total length of the array exceeds the given maximum length
+ * or if the total length of the stringified array in bytes exceeds the given maximum bytes.
+ * Execute this function recursively until the given array is within the given limits.
+ * @param originalArray The original array to split
+ * @param maxLength The maximum length of the array
+ * @param maxBytes The maximum length of the stringified array in bytes
+ * @returns An array of arrays. If the original array is within the given limits, the array will contain the original array.
+ */
+export function splitLongArray<T>(
+  originalArray: T[],
+  maxLength: number,
+  maxBytes: number,
+): T[][] {
+  const returnArray: T[][] = [];
+  if (
+    originalArray.length <= maxLength &&
+    getBlobBytes(JSON.stringify(originalArray)) <= maxBytes
+  ) {
+    returnArray.push(originalArray);
+  } else {
+    const halfLength = Math.floor(originalArray.length / 2);
+    const firstHalf = originalArray.slice(0, halfLength);
+    const secondHalf = originalArray.slice(halfLength);
+    [firstHalf, secondHalf].forEach((arr) => {
+      if (arr.length === 1 && getBlobBytes(JSON.stringify(arr)) > maxBytes) {
+        throw new Error(
+          `[${ADDON_NAME}] The following cell value exceeds the maximum length of the text to translate. Please consider splitting the content into multiple cells.:\n${String(arr[0])}`,
+        );
+      }
+      if (
+        arr.length <= maxLength &&
+        getBlobBytes(JSON.stringify(arr)) <= maxBytes
+      ) {
+        returnArray.push(arr);
+      } else {
+        returnArray.push(...splitLongArray(arr, maxLength, maxBytes));
+      }
+    });
+  }
+  return returnArray;
+}
+
+/**
  * Call the DeepL API on the `translate` endpoint
  * @param sourceText Array of texts to translate
- * @param sourceLocale The language of the source text
  * @param targetLocale The language to be translated into
+ * @param sourceLocale The language of the source text
  * @returns Array of translated texts.
  * @see https://www.deepl.com/docs-api/translate-text/
  */
 export function deepLTranslate(
-  sourceText: string | string[] | null | undefined,
-  sourceLocale: string | null | undefined,
+  sourceText: string | number | (string | number)[] | null | undefined,
   targetLocale: string,
+  sourceLocale?: string | null,
 ): string[] {
   const endpoint = 'translate';
-  let sourceTexts: string[];
-  if (!sourceText || sourceText.length === 0) {
+  let sourceTexts: (string | number)[];
+  if (
+    !sourceText ||
+    (typeof sourceText === 'string' && sourceText.length === 0)
+  ) {
     throw new Error(`[${ADDON_NAME}] Empty input.`);
   } else if (Array.isArray(sourceText)) {
     sourceTexts = sourceText;
@@ -441,7 +499,6 @@ export function handleDeepLErrors(
   response: GoogleAppsScript.URL_Fetch.HTTPResponse,
 ): GoogleAppsScript.URL_Fetch.HTTPResponse {
   const responseCode = response.getResponseCode();
-  console.log(`responseCode: ${responseCode}`, response.getContentText());
   if (responseCode === 429) {
     throw new Error(
       `[${ADDON_NAME}] Too Many Requests: Try again after some time.`,
