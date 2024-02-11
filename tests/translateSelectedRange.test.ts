@@ -5,7 +5,17 @@ describe('translateSelectedRange', () => {
     global.UrlFetchApp = {
       fetch: jest.fn(() => ({
         getContentText: jest.fn(
-          () => JSON.stringify({ translations: [{ text: 'Hallo, Welt!' }] }), // mock deepLTranslate
+          () =>
+            JSON.stringify({
+              translations: [
+                { text: 'Hallo, Welt!' },
+                { text: 'Hallo, Welt!' },
+                { text: 'Hallo, Welt!' },
+                { text: '' },
+                { text: 'Hallo, Welt!' },
+                { text: '12345' },
+              ],
+            }), // mock deepLTranslate
         ),
         getResponseCode: jest.fn(() => 200), // mock handleDeepLErrors() to not throw errors
       })),
@@ -60,11 +70,9 @@ describe('translateSelectedRange', () => {
       newBlob: jest.fn(() => ({
         getBytes: jest.fn(() => [0, 1, 2, 3]), // mock blob < THRESHOLD_BYTES (1900)
       })),
-      sleep: jest.fn(),
     } as unknown as GoogleAppsScript.Utilities.Utilities;
     translateSelectedRange();
-    expect(global.Utilities.sleep).toHaveBeenCalledTimes(5);
-    expect(global.UrlFetchApp.fetch).toHaveBeenCalledTimes(5);
+    expect(global.UrlFetchApp.fetch).toHaveBeenCalledTimes(1);
     expect(console.error).not.toHaveBeenCalled();
   });
   describe('should catch errors', () => {
@@ -96,7 +104,6 @@ describe('translateSelectedRange', () => {
         })),
       } as unknown as GoogleAppsScript.Properties.PropertiesService;
       translateSelectedRange();
-      expect(global.Utilities.sleep).not.toHaveBeenCalled();
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         expect.stringMatching(
@@ -123,7 +130,6 @@ describe('translateSelectedRange', () => {
         })),
       } as unknown as GoogleAppsScript.Properties.PropertiesService;
       translateSelectedRange();
-      expect(global.Utilities.sleep).not.toHaveBeenCalled();
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         expect.stringMatching(
@@ -185,61 +191,6 @@ describe('translateSelectedRange', () => {
       expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         expect.stringMatching(/^Error: \[SheetsL\] Translation canceled.\n/),
-      );
-    });
-    it('when a given text has a byte length that is larger than the threshold ', () => {
-      const mockSelectedRangeValues = [
-        ['Hello, world!', 'Hello, world!'],
-        ['Hello, world!', ''], // empty cell
-        ['Hello, world!', 12345], // non-string cell
-      ];
-      global.SpreadsheetApp = {
-        getActiveSpreadsheet: jest.fn(() => ({
-          getActiveSheet: jest.fn(() => ({
-            getActiveRange: jest.fn(() => ({
-              getValues: jest.fn(() => mockSelectedRangeValues),
-              getRow: jest.fn(() => 1),
-              getColumn: jest.fn(() => 1),
-              getNumRows: jest.fn(() => mockSelectedRangeValues.length),
-              getNumColumns: jest.fn(() => mockSelectedRangeValues[0].length),
-            })),
-            getRange: jest.fn(() => ({
-              isBlank: jest.fn(() => true), // mock target range is blank
-              setValues: jest.fn(),
-            })),
-          })),
-        })),
-        getUi: jest.fn(() => ({
-          ButtonSet: {
-            OK_CANCEL: 'ok_cancel',
-          },
-          alert: jest.fn(),
-        })),
-      } as unknown as GoogleAppsScript.Spreadsheet.SpreadsheetApp;
-      global.PropertiesService = {
-        getUserProperties: jest.fn(() => ({
-          getProperties: jest.fn(() => ({
-            targetLocale: 'DE', // mock target locale set
-          })),
-          getProperty: jest.fn((key) => {
-            if (key === 'deeplApiKey') return 'Sample-API-key:fx'; // mock getDeepLApiKey()
-            return null;
-          }),
-        })),
-      } as unknown as GoogleAppsScript.Properties.PropertiesService;
-      global.Utilities = {
-        newBlob: jest.fn(() => ({
-          getBytes: jest.fn(() => new Array(2000) as number[]), // mock blob > THRESHOLD_BYTES (1900)
-        })),
-        sleep: jest.fn(),
-      } as unknown as GoogleAppsScript.Utilities.Utilities;
-      translateSelectedRange();
-      expect(global.Utilities.sleep).not.toHaveBeenCalled();
-      expect(global.UrlFetchApp.fetch).not.toHaveBeenCalled();
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringMatching(
-          /^Error: \[SheetsL\] Cell content length exceeds Google's limits. Please consider splitting the content into multiple cells./,
-        ),
       );
     });
   });
