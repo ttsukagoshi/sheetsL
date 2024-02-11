@@ -17,22 +17,22 @@ describe('deepLTranslate', () => {
   const mockSourceObjects = [
     {
       note: 'with source language specified',
-      sourceLang: 'EN-US',
       targetLang: 'DE',
+      sourceLang: 'EN-US',
       sourceText: 'Hello, World!',
       translatedText: 'Hallo, Welt!',
     },
     {
       note: 'without source language specified',
-      sourceLang: null,
       targetLang: 'DE',
+      sourceLang: null,
       sourceText: 'Hello, World!',
       translatedText: 'Hallo, Welt!',
     },
     {
       note: 'in an array of strings',
-      sourceLang: null,
       targetLang: 'DE',
+      sourceLang: null,
       sourceText: ['Hello, World!', 'Hello, World!'],
       translatedText: ['Hallo, Welt!', 'Hallo, Welt!'],
     },
@@ -53,7 +53,7 @@ describe('deepLTranslate', () => {
           getResponseCode: jest.fn(() => 200),
         })),
       } as unknown as GoogleAppsScript.URL_Fetch.UrlFetchApp;
-      const translated = deepLTranslate(sourceText, sourceLang, targetLang);
+      const translated = deepLTranslate(sourceText, targetLang, sourceLang);
       expect(translated).toStrictEqual(
         Array.isArray(translatedText) ? translatedText : [translatedText],
       );
@@ -78,7 +78,7 @@ describe('deepLTranslate', () => {
     'should throw an error $note',
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ({ note, sourceLang, targetLang, sourceText }) => {
-      expect(() => deepLTranslate(sourceText, sourceLang, targetLang)).toThrow(
+      expect(() => deepLTranslate(sourceText, targetLang, sourceLang)).toThrow(
         new Error('[SheetsL] Empty input.'),
       );
     },
