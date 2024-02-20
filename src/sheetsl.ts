@@ -67,6 +67,15 @@ interface DeepLTranslationObj {
   text: string;
 }
 
+interface DeepLUsageResponse {
+  character_count: number;
+  character_limit: number;
+  document_limit?: number;
+  document_count?: number;
+  team_document_limit?: number;
+  team_document_count?: number;
+}
+
 /**
  * The type of language that should be returned in the GET request
  * to the DeepL API to retrieve its supported languages.
@@ -86,16 +95,17 @@ type PropertiesObj = Record<string, string>;
 function onOpen(): void {
   const ui = SpreadsheetApp.getUi();
   ui.createAddonMenu()
+    .addItem('Translate', 'translateSelectedRange')
+    .addSeparator()
+    .addItem('Check usage', 'checkUsage')
     .addSubMenu(
       ui
         .createMenu('Settings')
-        .addItem('Set DeepL API Key', 'setDeeplApiKey')
-        .addItem('Delete DeepL API Key', 'deleteDeeplApiKey')
+        .addItem('Set language', 'setLanguage')
         .addSeparator()
-        .addItem('Set Language', 'setLanguage'),
+        .addItem('Set DeepL API Key', 'setDeeplApiKey')
+        .addItem('Delete DeepL API Key', 'deleteDeeplApiKey'),
     )
-    .addSeparator()
-    .addItem('Translate', 'translateSelectedRange')
     .addToUi();
 }
 
@@ -398,6 +408,23 @@ export function splitLongArray<T>(
 }
 
 /**
+ * Check the usage of the DeepL API
+ * and show the result to the user in an alert box.
+ */
+export function checkUsage(): void {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const usage = deepLGetUsage();
+    ui.alert(
+      `[${ADDON_NAME}] DeepL API Usage Status:\n\nYou are currently using ${usage.character_count} characters out of ${usage.character_limit} characters (${Math.round((10 * 100 * usage.character_count) / usage.character_limit) / 10}%).`,
+    );
+  } catch (error) {
+    console.error((error as Error).stack);
+    ui.alert((error as Error).message);
+  }
+}
+
+/**
  * Call the DeepL API on the `translate` endpoint
  * @param sourceText Array of texts to translate
  * @param targetLocale The language to be translated into
@@ -478,6 +505,28 @@ export function deepLGetLanguages(
   );
 
   return JSON.parse(response.getContentText()) as DeepLSupportedLanguages[];
+}
+
+/**
+ * Retrieve the usage of the DeepL API.
+ * @returns The usage of the DeepL API.
+ * @see https://www.deepl.com/docs-api/general/get-usage
+ */
+export function deepLGetUsage(): DeepLUsageResponse {
+  const endpoint = 'usage';
+  // API key
+  const apiKey = getDeepLApiKey();
+  const baseUrl = getDeepLApiBaseUrl(apiKey);
+  // Call the DeepL API
+  const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'get',
+    headers: { Authorization: `DeepL-Auth-Key ${apiKey}` },
+    muteHttpExceptions: true,
+  };
+  const response = handleDeepLErrors(
+    UrlFetchApp.fetch(baseUrl + endpoint, options),
+  );
+  return JSON.parse(response.getContentText()) as DeepLUsageResponse;
 }
 
 /**
