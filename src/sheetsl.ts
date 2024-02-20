@@ -499,10 +499,13 @@ export function deepLGetLanguages(
   const apiKey = getDeepLApiKey();
   const baseUrl = getDeepLApiBaseUrl(apiKey);
   // Call the DeepL API
-  const url = baseUrl + endpoint + `?auth_key=${apiKey}&type=${type}`;
-  const response = handleDeepLErrors(
-    UrlFetchApp.fetch(url, { muteHttpExceptions: true }),
-  );
+  const url = baseUrl + endpoint + `?type=${type}`;
+  const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: 'get',
+    headers: { Authorization: `DeepL-Auth-Key ${apiKey}` },
+    muteHttpExceptions: true,
+  };
+  const response = handleDeepLErrors(UrlFetchApp.fetch(url, options));
 
   return JSON.parse(response.getContentText()) as DeepLSupportedLanguages[];
 }
